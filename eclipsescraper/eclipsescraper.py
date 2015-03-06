@@ -24,11 +24,12 @@ def prep_raw_html(html):
 
 class EclipseTrack:
 
-    _properties = ('columns', 'vertexpositions')
+    _properties = ('date', 'columns', 'vertexpositions')
 
     # Start by taking a raw data string and parsing it build the waypoints list
-    def __init__(self, rawdata):
+    def __init__(self, date, rawdata):
 
+        self.date = date
         self.columns = [ 'Time','NorthLimitLat', 'NorthLimitLon', 'SouthLimitLat', 'SouthLimitLon', 'CentralLat', 'CentralLon',
                          'MSDiamRatio', 'SunAltitude', 'SunAzimuth', 'PathWidth', 'CentralLineDuration' ]
         self.vertexpositions = { 'north': [], 'south': [], 'central': [] }
@@ -171,3 +172,32 @@ class EclipseTrack:
 
     def CentralLineDuration(self, row):
         return row[17]
+
+
+    def czml(self):
+
+        doc = czml.CZML();
+        iso = self.date.isoformat()
+
+        # Generate clock
+        packet_id = iso + '_clock'
+        packet = czml.CZMLPacket(id=packet_id)
+        c = czml.Clock()
+        c.multiplier = 300
+        c.range = "LOOP_STOP"
+        c.step = "SYSTEM_CLOCK_MULTIPLIER"
+        packet.clock = c
+        doc.packets.append(packet)
+
+        # Generate central polyline
+        packet_id = iso + '_central_polyline'
+        packet = czml.CZMLPacket(id=packet_id)
+        cpg = czml.PolylineGlow(glowPower=0.25, color=czml.Color(rgba=(223, 150, 47, 128)))
+        cm = czml.Material(polylineGlow=cpg)
+        cpl = czml.Polyline(show=True, width=5, material=cm)
+        packet.polyline = cpl
+        doc.packets.append(packet)
+
+        print "CZML DUMP:"
+        print doc.dumps()
+        return doc

@@ -1,0 +1,12 @@
+install:
+    pip install coveralls --use-mirrors
+
+script:
+    coverage run --source=eclipsescraper setup.py test
+
+after_success:
+    coveralls
+
+notifications:
+  email:
+    - frencils@gmail.com
