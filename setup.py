@@ -39,7 +39,7 @@ setup(name='eclipsescraper',
       install_requires=[
           # -*- Extra requirements: -*-
           "urllib3",
-          "czml",
+          "czml>=0.1",
           ],
       )
 

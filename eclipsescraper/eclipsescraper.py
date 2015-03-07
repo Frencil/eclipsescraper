@@ -188,6 +188,16 @@ class EclipseTrack:
         packet.clock = c
         doc.packets.append(packet)
 
+        # Generate north polyline
+        packet_id = iso + '_north_polyline'
+        packet = czml.CZMLPacket(id=packet_id)
+        nsc = czml.SolidColor(color=czml.Color(rgba=(255, 255, 255, 128)))
+        nmat = czml.Material(solidColor=nsc)
+        npos = czml.Positions(cartographicDegrees=self.vertexpositions['north'])
+        npl = czml.Polyline(show=True, width=1, followSurface=True, material=nmat, positions=npos)
+        packet.polyline = npl
+        doc.packets.append(packet)
+
         # Generate central polyline
         packet_id = iso + '_central_polyline'
         packet = czml.CZMLPacket(id=packet_id)
@@ -196,6 +206,25 @@ class EclipseTrack:
         cpos = czml.Positions(cartographicDegrees=self.vertexpositions['central'])
         cpl = czml.Polyline(show=True, width=5, followSurface=True, material=cmat, positions=cpos)
         packet.polyline = cpl
+        doc.packets.append(packet)
+
+        # Generate south polyline
+        packet_id = iso + '_south_polyline'
+        packet = czml.CZMLPacket(id=packet_id)
+        ssc = czml.SolidColor(color=czml.Color(rgba=(255, 255, 255, 128)))
+        smat = czml.Material(solidColor=ssc)
+        spos = czml.Positions(cartographicDegrees=self.vertexpositions['south'])
+        spl = czml.Polyline(show=True, width=1, followSurface=True, material=smat, positions=spos)
+        packet.polyline = spl
+        doc.packets.append(packet)
+
+        # Generate ellipse shadow
+        packet_id = iso + '_shadow_ellipse'
+        packet = czml.CZMLPacket(id=packet_id)
+        esc = czml.SolidColor(color=czml.Color(rgba=(0, 0, 0, 160)))
+        emat = czml.Material(solidColor=esc)
+        ell = czml.Ellipse(show=True, fill=True, material=emat)
+        packet.ellipse = ell
         doc.packets.append(packet)
 
         print "CZML DUMP:"
