@@ -15,7 +15,7 @@ class BaseClassesTestCase(unittest.TestCase):
 
     # To prevent excessive load on the actual eclipse site HTML should be presupplied for individual events.
     
-    # Test the full scraping of the 2017-08-21 event (abbreiviated).
+    # Test the full scraping of the 2017-08-21 event (abbreviated).
     def test_Scrape20170821(self):
 
         self.maxDiff = None

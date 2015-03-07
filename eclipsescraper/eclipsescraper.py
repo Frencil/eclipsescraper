@@ -2,7 +2,6 @@
 
 import re
 import urllib3
-import json
 from datetime import date
 
 try:
