@@ -15,7 +15,7 @@ class BaseClassesTestCase(unittest.TestCase):
 
     # To prevent excessive load on the actual eclipse site HTML should be presupplied for individual events.
     
-    # Test the full scraping of the 2017-08-21 event.
+    # Test the full scraping of the 2017-08-21 event (abbreiviated).
     def test_Scrape20170821(self):
 
         self.maxDiff = None
@@ -69,8 +69,10 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
                          {'id': '2017-08-21_central_polyline',
                           'polyline': {'width': 5,
                                        'show': True,
+                                       'followSurface': True,
                                        'material': {'polylineGlow': {'color': { 'rgba': [223,150,47,128] },
                                                                      'glowPower': 0.25}},
+                                       'positions': {'cartographicDegrees': [-162.85, 41.487, 0.0, -29.937, 11.57, 0.0]},
                                        },
                           }]
         self.assertEqual(list(test_czml.data()), expected_czml)

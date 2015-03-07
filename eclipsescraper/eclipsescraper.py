@@ -193,8 +193,9 @@ class EclipseTrack:
         packet_id = iso + '_central_polyline'
         packet = czml.CZMLPacket(id=packet_id)
         cpg = czml.PolylineGlow(glowPower=0.25, color=czml.Color(rgba=(223, 150, 47, 128)))
-        cm = czml.Material(polylineGlow=cpg)
-        cpl = czml.Polyline(show=True, width=5, material=cm)
+        cmat = czml.Material(polylineGlow=cpg)
+        cpos = czml.Positions(cartographicDegrees=self.vertexpositions['central'])
+        cpl = czml.Polyline(show=True, width=5, followSurface=True, material=cmat, positions=cpos)
         packet.polyline = cpl
         doc.packets.append(packet)
 

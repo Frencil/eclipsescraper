@@ -39,6 +39,9 @@ setup(name='eclipsescraper',
       cmdclass = {'test': PyTest},
       install_requires=[
           # -*- Extra requirements: -*-
+          "re",
+          "json",
+          "datetime",
           "urllib3",
           "czml",
           ],
