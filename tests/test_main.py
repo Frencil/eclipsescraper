@@ -51,12 +51,20 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
 
         # Test processing of raw data string into structured track object
         test_track = eclipsescraper.EclipseTrack(test_date, test_data)
-        expected_track = {"date": date(2017, 8, 21),
-                          "vertexpositions":
-                              {"north": [-164.505, 41.495, 0.0, -36.81, 13.66, 0.0],
-                               "central": [-162.85, 41.487, 0.0, -37.658, 13.577, 0.0],
-                               "south": [-161.407, 41.42, 0.0, -38.467, 13.477, 0.0]},
-                          "columns": ["Time", "NorthLimitLat", "NorthLimitLon", "SouthLimitLat", "SouthLimitLon", "CentralLat", "CentralLon", "MSDiamRatio", "SunAltitude", "SunAzimuth", "PathWidth", "CentralLineDuration"]}
+        expected_track = {'date': date(2017, 8, 21),
+                          'columns': ['Time', 'NorthLimitLat', 'NorthLimitLon',
+                                      'SouthLimitLat', 'SouthLimitLon', 'CentralLat', 'CentralLon',
+                                      'MSDiamRatio', 'SunAltitude', 'SunAzimuth', 'PathWidth', 'CentralLineDuration'],
+                          'time': ['16:50','20:00'],
+                          'position': {'north': [(-164.505, 41.495), (-36.81, 13.66)],
+                                       'central': [(-162.85, 41.487), (-37.658, 13.577)],
+                                       'south': [(-161.407, 41.42), (-38.467, 13.477)]},
+                          'ms_diam_ratio': [1.018, 1.017],
+                          'sun_altitude': [7, 11],
+                          'sun_azimuth': [80, 280],
+                          'path_width': [70, 71],
+                          'central_line_duration': ['01m01.6s', '01m02.5s'],                        
+                          }
         self.assertEqual(test_track.data(), expected_track)
 
         # Test generation of CZML
@@ -95,6 +103,11 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
                           'ellipse': {'fill': True,
                                       'show': True,
                                       'material': {'solidColor': {'color': { 'rgba': [0, 0, 0, 160] }}},
+                                      'semiMajorAxis': {'number': ['2017-08-21T16:50:00Z', 70.0,
+                                                                   '2017-08-21T20:00:00Z', 71.0]},
+                                      'semiMinorAxis': {'number': ['2017-08-21T16:50:00Z', 70.0,
+                                                                   '2017-08-21T20:00:00Z', 71.0]},
+
                                       },
                           },
                          ]

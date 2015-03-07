@@ -23,7 +23,10 @@ def prep_raw_html(html):
 
 class EclipseTrack:
 
-    _properties = ('date', 'columns', 'vertexpositions')
+    _properties = ('date', 'columns',
+                   'time', 'position', 'ms_diam_ratio',
+                   'sun_altitude', 'sun_azimuth',
+                   'path_width', 'central_line_duration')
 
     # Start by taking a raw data string and parsing it build the waypoints list
     def __init__(self, date, rawdata):
@@ -31,7 +34,13 @@ class EclipseTrack:
         self.date = date
         self.columns = [ 'Time','NorthLimitLat', 'NorthLimitLon', 'SouthLimitLat', 'SouthLimitLon', 'CentralLat', 'CentralLon',
                          'MSDiamRatio', 'SunAltitude', 'SunAzimuth', 'PathWidth', 'CentralLineDuration' ]
-        self.vertexpositions = { 'north': [], 'south': [], 'central': [] }
+        self.time = []
+        self.position = { 'north': [], 'south': [], 'central': [] }
+        self.ms_diam_ratio = []
+        self.sun_altitude = []
+        self.sun_azimuth = []
+        self.path_width = []
+        self.central_line_duration = []
 
         #allrows = rawdata.split('\r')
         allrows = rawdata.split('\n')
@@ -102,20 +111,32 @@ class EclipseTrack:
             val = get(column, row)
             parsed_row.append(val)
 
+        if (parsed_row[0] != None):
+            self.time.append(parsed_row[0])
+
         if (parsed_row[1] != None) and (parsed_row[2] != None):
-            self.vertexpositions['north'].append(parsed_row[2])
-            self.vertexpositions['north'].append(parsed_row[1])
-            self.vertexpositions['north'].append(0.0)
+            self.position['north'].append((parsed_row[2], parsed_row[1]))
         
         if (parsed_row[3] != None) and (parsed_row[4] != None):
-            self.vertexpositions['south'].append(parsed_row[4])
-            self.vertexpositions['south'].append(parsed_row[3])
-            self.vertexpositions['south'].append(0.0)
+            self.position['south'].append((parsed_row[4], parsed_row[3]))
 
         if (parsed_row[5] != None) and (parsed_row[6] != None):        
-            self.vertexpositions['central'].append(parsed_row[6])
-            self.vertexpositions['central'].append(parsed_row[5])
-            self.vertexpositions['central'].append(0.0)
+            self.position['central'].append((parsed_row[6], parsed_row[5]))
+
+        if (parsed_row[7] != None):
+            self.ms_diam_ratio.append(parsed_row[7])
+
+        if (parsed_row[8] != None):
+            self.sun_altitude.append(parsed_row[8])
+
+        if (parsed_row[9] != None):
+            self.sun_azimuth.append(parsed_row[9])
+
+        if (parsed_row[10] != None):
+            self.path_width.append(parsed_row[10])
+
+        if (parsed_row[11] != None):
+            self.central_line_duration.append(parsed_row[11])
 
         return parsed_row
 
@@ -178,6 +199,22 @@ class EclipseTrack:
         doc = czml.CZML();
         iso = self.date.isoformat()
 
+        # Generate time-specific lists for various objects
+        north_polyline_degrees = []
+        central_polyline_degrees = []
+        south_polyline_degrees = []
+        ellipse_position = []
+        ellipse_semiMajorAxis = []
+        ellipse_semiMinorAxis = []
+        for t in range(len(self.time)):
+            time = iso + "T" + self.time[t] + ":00Z"
+            north_polyline_degrees += [self.position['north'][t][0], self.position['north'][t][1], 0.0]
+            central_polyline_degrees += [self.position['central'][t][0], self.position['central'][t][1], 0.0]
+            south_polyline_degrees += [self.position['south'][t][0], self.position['south'][t][1], 0.0]
+            ellipse_position += [time, self.position['central'][t][0], self.position['central'][t][1], 0.0]
+            ellipse_semiMajorAxis += [time, self.path_width[t]]
+            ellipse_semiMinorAxis += [time, self.path_width[t]]
+
         # Generate clock
         packet_id = iso + '_clock'
         packet = czml.CZMLPacket(id=packet_id)
@@ -193,7 +230,7 @@ class EclipseTrack:
         packet = czml.CZMLPacket(id=packet_id)
         nsc = czml.SolidColor(color=czml.Color(rgba=(255, 255, 255, 128)))
         nmat = czml.Material(solidColor=nsc)
-        npos = czml.Positions(cartographicDegrees=self.vertexpositions['north'])
+        npos = czml.Positions(cartographicDegrees=north_polyline_degrees)
         npl = czml.Polyline(show=True, width=1, followSurface=True, material=nmat, positions=npos)
         packet.polyline = npl
         doc.packets.append(packet)
@@ -203,7 +240,7 @@ class EclipseTrack:
         packet = czml.CZMLPacket(id=packet_id)
         cpg = czml.PolylineGlow(glowPower=0.25, color=czml.Color(rgba=(223, 150, 47, 128)))
         cmat = czml.Material(polylineGlow=cpg)
-        cpos = czml.Positions(cartographicDegrees=self.vertexpositions['central'])
+        cpos = czml.Positions(cartographicDegrees=central_polyline_degrees)
         cpl = czml.Polyline(show=True, width=5, followSurface=True, material=cmat, positions=cpos)
         packet.polyline = cpl
         doc.packets.append(packet)
@@ -213,7 +250,7 @@ class EclipseTrack:
         packet = czml.CZMLPacket(id=packet_id)
         ssc = czml.SolidColor(color=czml.Color(rgba=(255, 255, 255, 128)))
         smat = czml.Material(solidColor=ssc)
-        spos = czml.Positions(cartographicDegrees=self.vertexpositions['south'])
+        spos = czml.Positions(cartographicDegrees=south_polyline_degrees)
         spl = czml.Polyline(show=True, width=1, followSurface=True, material=smat, positions=spos)
         packet.polyline = spl
         doc.packets.append(packet)
@@ -223,7 +260,9 @@ class EclipseTrack:
         packet = czml.CZMLPacket(id=packet_id)
         esc = czml.SolidColor(color=czml.Color(rgba=(0, 0, 0, 160)))
         emat = czml.Material(solidColor=esc)
-        ell = czml.Ellipse(show=True, fill=True, material=emat)
+        xmaj = czml.Number(ellipse_semiMajorAxis)
+        xmin = czml.Number(ellipse_semiMinorAxis)
+        ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
         packet.ellipse = ell
         doc.packets.append(packet)
 
