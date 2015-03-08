@@ -9,29 +9,19 @@ try:
 except ImportError:
     import czml
 
-def prep_raw_html(html):
-    try:
-        p1 = html.partition('<pre>');
-        p2 = p1[2].partition('</pre>');
-        rawdata = p2[0].strip()
-        if len(rawdata) == 0:
-            raise Exception('raw data string not found between <pre> tags')
-        else:
-            return rawdata
-    except:
-        raise Exception('Unable to extract raw data string from html')
-
 class EclipseTrack:
 
-    _properties = ('date', 'columns',
+    _properties = ('date', 'columns', 'url',
                    'time', 'position', 'ms_diam_ratio',
                    'sun_altitude', 'sun_azimuth',
                    'path_width', 'central_line_duration')
 
     # Start by taking a raw data string and parsing it build the waypoints list
-    def __init__(self, date, rawdata):
+    def __init__(self, date):
 
         self.date = date
+        self.url = None
+        self.html = None
         self.columns = [ 'Time','NorthLimitLat', 'NorthLimitLon', 'SouthLimitLat', 'SouthLimitLon', 'CentralLat', 'CentralLon',
                          'MSDiamRatio', 'SunAltitude', 'SunAzimuth', 'PathWidth', 'CentralLineDuration' ]
         self.time = []
@@ -42,8 +32,29 @@ class EclipseTrack:
         self.path_width = []
         self.central_line_duration = []
 
-        #allrows = rawdata.split('\r')
-        allrows = rawdata.split('\n')
+    def loadFromURL(self, url):
+        self.url = url
+        iso = self.date.isoformat()
+        r = http.request('GET', self.url)
+        if r.status != 200:
+            raise Exception('Unable to load eclipse event: ' + iso + ' (URL: ' + self.url + ')')
+        else:
+            self.loadFromRawHTML(r.data)
+
+    def loadFromRawHTML(self, rawhtml):
+        try:
+            p1 = rawhtml.partition('<pre>');
+            p2 = p1[2].partition('</pre>');
+            html = p2[0].strip()
+            if len(html) == 0:
+                raise Exception('raw data string not found between <pre> tags')
+            else:
+                self.parseHTML(html)
+        except:
+            raise Exception('Unable to extract raw data string from html')
+
+    def parseHTML(self, html):
+        allrows = html.split('\n')
         limits = 0
         for row in allrows:
             if 'Limits' in row:
@@ -216,12 +227,15 @@ class EclipseTrack:
             ellipse_semiMinorAxis += [time, self.path_width[t]]
 
         # Generate clock
-        packet_id = iso + '_clock'
-        packet = czml.CZMLPacket(id=packet_id)
+        start_time = iso + "T" + self.time[0] + ":00Z"
+        end_time = iso + "T" + self.time[-1] + ":00Z"
+        packet = czml.CZMLPacket(id='document')
         c = czml.Clock()
         c.multiplier = 300
         c.range = "LOOP_STOP"
         c.step = "SYSTEM_CLOCK_MULTIPLIER"
+        c.currentTime = start_time
+        #c.interval = start_time + "/" + end_time
         packet.clock = c
         doc.packets.append(packet)
 
@@ -264,8 +278,7 @@ class EclipseTrack:
         xmin = czml.Number(ellipse_semiMinorAxis)
         ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
         packet.ellipse = ell
+        packet.position = czml.Position(cartographicDegrees=ellipse_position)
         doc.packets.append(packet)
 
-        print "CZML DUMP:"
-        print doc.dumps()
         return doc
