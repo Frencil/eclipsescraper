@@ -72,10 +72,12 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
         # Test generation of CZML
         test_czml = test_track.czml()
         expected_czml = [{'id': 'document',
+                          'version': '1.0',
                           'clock': {'multiplier': 300,
                                     'range': 'LOOP_STOP',
                                     'step': 'SYSTEM_CLOCK_MULTIPLIER',
-                                    "currentTime": "2017-08-21T16:50:00Z",
+                                    'currentTime': '2017-08-21T16:50:00Z',
+                                    'interval': '2017-08-21T16:50:00Z/2017-08-21T20:00:00Z',
                                     },
                           },
                          {'id': '2017-08-21_north_polyline',

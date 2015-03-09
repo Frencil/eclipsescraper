@@ -226,20 +226,20 @@ class EclipseTrack:
             ellipse_semiMajorAxis += [time, self.path_width[t]]
             ellipse_semiMinorAxis += [time, self.path_width[t]]
 
-        # Generate clock
+        # Generate document packet with clock
         start_time = iso + "T" + self.time[0] + ":00Z"
         end_time = iso + "T" + self.time[-1] + ":00Z"
-        packet = czml.CZMLPacket(id='document')
+        packet = czml.CZMLPacket(id='document',version='1.0')
         c = czml.Clock()
         c.multiplier = 300
         c.range = "LOOP_STOP"
         c.step = "SYSTEM_CLOCK_MULTIPLIER"
         c.currentTime = start_time
-        #c.interval = start_time + "/" + end_time
+        c.interval = start_time + "/" + end_time
         packet.clock = c
         doc.packets.append(packet)
 
-        # Generate north polyline
+        # Generate north polyline packet
         packet_id = iso + '_north_polyline'
         packet = czml.CZMLPacket(id=packet_id)
         nsc = czml.SolidColor(color=czml.Color(rgba=(255, 255, 255, 128)))
@@ -249,7 +249,7 @@ class EclipseTrack:
         packet.polyline = npl
         doc.packets.append(packet)
 
-        # Generate central polyline
+        # Generate central polyline packet
         packet_id = iso + '_central_polyline'
         packet = czml.CZMLPacket(id=packet_id)
         cpg = czml.PolylineGlow(glowPower=0.25, color=czml.Color(rgba=(223, 150, 47, 128)))
@@ -259,7 +259,7 @@ class EclipseTrack:
         packet.polyline = cpl
         doc.packets.append(packet)
 
-        # Generate south polyline
+        # Generate south polyline packet
         packet_id = iso + '_south_polyline'
         packet = czml.CZMLPacket(id=packet_id)
         ssc = czml.SolidColor(color=czml.Color(rgba=(255, 255, 255, 128)))
@@ -269,7 +269,7 @@ class EclipseTrack:
         packet.polyline = spl
         doc.packets.append(packet)
 
-        # Generate ellipse shadow
+        # Generate ellipse shadow packet
         packet_id = iso + '_shadow_ellipse'
         packet = czml.CZMLPacket(id=packet_id)
         esc = czml.SolidColor(color=czml.Color(rgba=(0, 0, 0, 160)))
