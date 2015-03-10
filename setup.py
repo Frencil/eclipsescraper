@@ -20,7 +20,6 @@ setup(name='eclipsescraper',
       classifiers=[
         "Topic :: Scientific/Engineering :: GIS",
         "Programming Language :: Python",
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
@@ -39,6 +38,7 @@ setup(name='eclipsescraper',
       install_requires=[
           # -*- Extra requirements: -*-
           "czml>=0.3",
+          "lxml",
           ],
       )
 
