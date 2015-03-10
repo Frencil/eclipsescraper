@@ -14,7 +14,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(name='eclipsescraper',
-      version=0.1,
+      version=0.2,
       description="Python module for scraping NASA's eclipse site into usable CZML documents",
       long_description=open('README.md').read(),
       classifiers=[

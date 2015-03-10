@@ -22,5 +22,5 @@ python setup.py test
 
 Eclipse Scraper is continually tested with [Travis CI](https://travis-ci.org/Frencil/eclipsescraper).
 
-![last build](https://api.travis-ci.org/Frencil/eclipsescraper.png)
-![coverage](https://coveralls.io/repos/Frencil/eclipsescraper/badge.png?branch=master)
+[![Build Status](https://api.travis-ci.org/Frencil/eclipsescraper.png)](https://travis-ci.org/Frencil/eclipsescraper)
+[![Coverage Status](https://coveralls.io/repos/Frencil/eclipsescraper/badge.svg?branch=master)](https://coveralls.io/r/Frencil/eclipsescraper?branch=master)
