@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import re
-import urllib3
+import urllib.request
 from datetime import date
 
 try:
@@ -35,24 +35,22 @@ class EclipseTrack:
     def loadFromURL(self, url):
         self.url = url
         iso = self.date.isoformat()
-        http = urllib3.PoolManager()
-        r = http.request('GET', self.url)
+        r = urllib.request.urlopen(self.url)
         if r.status != 200:
             raise Exception('Unable to load eclipse event: ' + iso + ' (URL: ' + self.url + ')')
         else:
-            self.loadFromRawHTML(r.data)
+            html = r.read().decode('utf-8')
+            self.loadFromRawHTML(html)
 
     def loadFromRawHTML(self, rawhtml):
-        try:
-            p1 = rawhtml.partition('<pre>');
-            p2 = p1[2].partition('</pre>');
-            html = p2[0].strip()
-            if len(html) == 0:
-                raise Exception('raw data string not found between <pre> tags')
-            else:
-                self.parseHTML(html)
-        except:
-            raise Exception('Unable to extract raw data string from html')
+        print(rawhtml)
+        p1 = rawhtml.partition('<pre>');
+        p2 = p1[2].partition('</pre>');
+        html = p2[0].strip()
+        if len(html) == 0:
+            raise Exception('raw data string not found between <pre> tags')
+        else:
+            self.parseHTML(html)
 
     def parseHTML(self, html):
         allrows = html.split('\n')
