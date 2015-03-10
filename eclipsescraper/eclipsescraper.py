@@ -2,12 +2,12 @@
 
 import re, sys
 from datetime import date
+from lxml import html
 
 if sys.version[0] is '3':
     import urllib.request
-else:
-    import urllib
-
+elif sys.version[0] is '2':
+    import requests
 
 try:
     from czml import czml
@@ -40,17 +40,19 @@ class EclipseTrack:
     def loadFromURL(self, url):
         self.url = url
         iso = self.date.isoformat()
+
         if sys.version[0] is '3':
             r = urllib.request.urlopen(self.url)
-            status = r.status
-        else:
-            r = urllib.urlopen(self.url)
-            status = r.getcode()
-        if status != 200:
-            raise Exception('Unable to load eclipse event: ' + iso + ' (URL: ' + self.url + ')')
-        else:
-            html = r.read().decode('utf-8')
-            self.loadFromRawHTML(html)
+            if r.status != 200:
+                raise Exception('Unable to load eclipse event: ' + iso + ' (URL: ' + self.url + ')')
+            else:
+                html = r.read().decode('utf-8','ignore')
+
+        elif sys.version[0] is '2':
+            page = requests.get(url)
+            html = page.text.encode('ascii','ignore')
+        
+        self.loadFromRawHTML(html)
 
     def loadFromRawHTML(self, rawhtml):
         p1 = rawhtml.partition('<pre>');
@@ -119,6 +121,13 @@ class EclipseTrack:
     def parse_row(self, row):
 
         parsed_row = []
+
+        # Ignore rows with ?s for anything (TODO: something better)
+        try:
+            if row.index('?'):
+                return None
+        except ValueError:
+            pass
         
         def get(column, row):
             def func_not_found(row):
