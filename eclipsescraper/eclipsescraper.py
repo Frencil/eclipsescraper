@@ -35,6 +35,7 @@ class EclipseTrack:
     def loadFromURL(self, url):
         self.url = url
         iso = self.date.isoformat()
+        http = urllib3.PoolManager()
         r = http.request('GET', self.url)
         if r.status != 200:
             raise Exception('Unable to load eclipse event: ' + iso + ' (URL: ' + self.url + ')')
@@ -281,4 +282,4 @@ class EclipseTrack:
         packet.position = czml.Position(cartographicDegrees=ellipse_position)
         doc.packets.append(packet)
 
-        return doc
+        return list(doc.data())
