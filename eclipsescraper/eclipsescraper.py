@@ -65,7 +65,7 @@ class EclipseTrack:
             self.parseHTML(html)
 
     def parseHTML(self, html):
-        allrows = html.split('\n')
+        allrows = re.sub(r'\r',r'\n',html).split('\n')
         limits = 0
         for row in allrows:
             if 'Limits' in row:
@@ -122,13 +122,6 @@ class EclipseTrack:
     def parse_row(self, row):
 
         parsed_row = []
-
-        # Ignore rows with ?s for anything (TODO: something better)
-        try:
-            if row.index('?'):
-                return None
-        except ValueError:
-            pass
         
         def get(column, row):
             def func_not_found(row):
@@ -145,27 +138,24 @@ class EclipseTrack:
 
         if (parsed_row[1] != None) and (parsed_row[2] != None):
             self.position['north'].append((parsed_row[2], parsed_row[1]))
+        else:
+            self.position['north'].append(None)
         
         if (parsed_row[3] != None) and (parsed_row[4] != None):
             self.position['south'].append((parsed_row[4], parsed_row[3]))
+        else:
+            self.position['south'].append(None)
 
         if (parsed_row[5] != None) and (parsed_row[6] != None):        
             self.position['central'].append((parsed_row[6], parsed_row[5]))
+        else:
+            self.position['central'].append(None)
 
-        if (parsed_row[7] != None):
-            self.ms_diam_ratio.append(parsed_row[7])
-
-        if (parsed_row[8] != None):
-            self.sun_altitude.append(parsed_row[8])
-
-        if (parsed_row[9] != None):
-            self.sun_azimuth.append(parsed_row[9])
-
-        if (parsed_row[10] != None):
-            self.path_width.append(parsed_row[10])
-
-        if (parsed_row[11] != None):
-            self.central_line_duration.append(parsed_row[11])
+        self.ms_diam_ratio.append(parsed_row[7])
+        self.sun_altitude.append(parsed_row[8])
+        self.sun_azimuth.append(parsed_row[9])
+        self.path_width.append(parsed_row[10])
+        self.central_line_duration.append(parsed_row[11])
 
         return parsed_row
 
@@ -237,12 +227,16 @@ class EclipseTrack:
         ellipse_semiMinorAxis = []
         for t in range(len(self.time)):
             time = iso + "T" + self.time[t] + ":00Z"
-            north_polyline_degrees += [self.position['north'][t][0], self.position['north'][t][1], 0.0]
-            central_polyline_degrees += [self.position['central'][t][0], self.position['central'][t][1], 0.0]
-            south_polyline_degrees += [self.position['south'][t][0], self.position['south'][t][1], 0.0]
-            ellipse_position += [time, self.position['central'][t][0], self.position['central'][t][1], 0.0]
-            ellipse_semiMajorAxis += [time, self.path_width[t]]
-            ellipse_semiMinorAxis += [time, self.path_width[t]]
+            if self.position['north'][t] != None:
+                north_polyline_degrees += [self.position['north'][t][0], self.position['north'][t][1], 0.0]
+            if self.position['central'][t] != None:
+                central_polyline_degrees += [self.position['central'][t][0], self.position['central'][t][1], 0.0]
+                ellipse_position += [time, self.position['central'][t][0], self.position['central'][t][1], 0.0]
+            if self.position['south'][t] != None:
+                south_polyline_degrees += [self.position['south'][t][0], self.position['south'][t][1], 0.0]
+            if self.path_width[t] != None:
+                ellipse_semiMajorAxis += [time, self.path_width[t]/2 * 1000]
+                ellipse_semiMinorAxis += [time, self.path_width[t]/2 * 1000]
 
         # Generate document packet with clock
         start_time = iso + "T" + self.time[0] + ":00Z"
