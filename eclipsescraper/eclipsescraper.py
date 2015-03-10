@@ -1,8 +1,13 @@
 #!/usr/bin/python
 
-import re
-import urllib.request
+import re, sys
 from datetime import date
+
+if sys.version[0] is '3':
+    import urllib.request
+else:
+    import urllib
+
 
 try:
     from czml import czml
@@ -35,15 +40,19 @@ class EclipseTrack:
     def loadFromURL(self, url):
         self.url = url
         iso = self.date.isoformat()
-        r = urllib.request.urlopen(self.url)
-        if r.status != 200:
+        if sys.version[0] is '3':
+            r = urllib.request.urlopen(self.url)
+            status = r.status
+        else:
+            r = urllib.urlopen(self.url)
+            status = r.getcode()
+        if status != 200:
             raise Exception('Unable to load eclipse event: ' + iso + ' (URL: ' + self.url + ')')
         else:
             html = r.read().decode('utf-8')
             self.loadFromRawHTML(html)
 
     def loadFromRawHTML(self, rawhtml):
-        print(rawhtml)
         p1 = rawhtml.partition('<pre>');
         p2 = p1[2].partition('</pre>');
         html = p2[0].strip()
