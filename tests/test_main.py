@@ -42,7 +42,7 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
                                   'sun_altitude': [7, 11],
                                   'sun_azimuth': [80, 280],
                                   'path_width': [70, 71],
-                                  'central_line_duration': ['01m01.6s', '01m02.5s'],                        
+                                  'central_line_duration': ['01m01.6s', '01m02.5s'],
                                   }
 
     expected_czml['20170821'] = [{'id': 'document',
@@ -128,6 +128,9 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
         test_czml = test_track.czml()
         #print(test_czml)
         self.assertEqual(test_czml, self.expected_czml['20150320'])
+
+        test_camera_position = test_track.getCameraPosition()
+        self.assertEqual(test_camera_position, [-6.422, 64.568, 10000000.0])
 
     
     # Test the full scraping of the 2017-08-21 event (abbreviated).

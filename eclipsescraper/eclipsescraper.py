@@ -187,7 +187,7 @@ class EclipseTrack:
             return val
         except ValueError:
             return None
-        
+
     def SunAltitude(self, row):
         try:
             val = float(row[14])
@@ -212,6 +212,10 @@ class EclipseTrack:
     def CentralLineDuration(self, row):
         return row[17]
 
+    def getCameraPosition(self):
+        index = int(round(len(self.position['central'])/2))
+        position = self.position['central'][index]
+        return [position[0], position[1], 10000000.0]
 
     def czml(self):
 
