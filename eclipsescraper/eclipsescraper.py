@@ -17,7 +17,7 @@ except ImportError:
 
 class EclipseTrack:
 
-    _properties = ('date', 'columns', 'url',
+    _properties = ('date', 'columns', 'url', 'type',
                    'time', 'position', 'ms_diam_ratio',
                    'sun_altitude', 'sun_azimuth',
                    'path_width', 'central_line_duration')
@@ -27,7 +27,7 @@ class EclipseTrack:
 
         self.date = date
         self.url = None
-        self.html = None
+        self.type = 'unknown'
         self.columns = [ 'Time','NorthLimitLat', 'NorthLimitLon', 'SouthLimitLat', 'SouthLimitLon', 'CentralLat', 'CentralLon',
                          'MSDiamRatio', 'SunAltitude', 'SunAzimuth', 'PathWidth', 'CentralLineDuration' ]
         self.time = []
@@ -41,6 +41,17 @@ class EclipseTrack:
     def loadFromURL(self, url):
         self.url = url
         iso = self.date.isoformat()
+
+        # Extract eclipse type from URL
+        annular = re.search(r"Apath\.html$",self.url)
+        hybrid = re.search(r"Hpath\.html$",self.url)
+        total = re.search(r"Tpath\.html$",self.url)
+        if annular:
+            self.type = 'annular'
+        elif hybrid:
+            self.type = 'hybrid'
+        elif total:
+            self.type = 'total'
 
         if sys.version[0] is '3':
             r = urllib.request.urlopen(self.url)
@@ -217,6 +228,14 @@ class EclipseTrack:
         position = self.position['central'][index]
         return [position[0], position[1], 10000000.0]
 
+    # Generate a JSON metadata object (for useful values that can't be represented in CZML)
+    def json(self):
+        obj = {'type': self.type,
+               'camera_position': self.getCameraPosition(),
+               }
+        return obj
+
+    # Generate a valid CZML object using all available data
     def czml(self):
 
         doc = czml.CZML();

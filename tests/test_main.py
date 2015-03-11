@@ -31,6 +31,7 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
  Limits  11 15.6N 027 19.9W  10 46.9N 027 33.1W  11 01.2N 027 26.5W  1.014   0   -   57  00m47.1s
 </pre>bar"""
     expected_track['20170821'] = {'date': date(2017, 8, 21),
+                                  'type': 'unknown',
                                   'columns': ['Time', 'NorthLimitLat', 'NorthLimitLon',
                                               'SouthLimitLat', 'SouthLimitLon', 'CentralLat', 'CentralLon',
                                               'MSDiamRatio', 'SunAltitude', 'SunAzimuth', 'PathWidth', 'CentralLineDuration'],
@@ -103,6 +104,7 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
         test_date = date(2017, 8, 21)
         test_track = eclipsescraper.EclipseTrack(test_date)
         expected_track = {'date': date(2017, 8, 21),
+                          'type': 'unknown',
                           'columns': ['Time', 'NorthLimitLat', 'NorthLimitLon',
                                       'SouthLimitLat', 'SouthLimitLon', 'CentralLat', 'CentralLon',
                                       'MSDiamRatio', 'SunAltitude', 'SunAzimuth', 'PathWidth', 'CentralLineDuration'],
@@ -121,22 +123,23 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
     # Test loadFromURL once and only once with a test URL staged on eclipsetracks.org
     def test_Scrape20150320_loadFromURL(self):
 
-        #self.maxDiff = None
         test_date = date(2015, 3, 20)
         test_track = eclipsescraper.EclipseTrack(test_date)
-        test_track.loadFromURL('http://eclipsetracks.org/test/eclipsescraper_test_20150320.html')
+        test_track.loadFromURL('http://eclipsetracks.org/test/eclipsescraper_test_SE2015Mar20Tpath.html')
         test_czml = test_track.czml()
-        #print(test_czml)
         self.assertEqual(test_czml, self.expected_czml['20150320'])
 
         test_camera_position = test_track.getCameraPosition()
         self.assertEqual(test_camera_position, [-6.422, 64.568, 10000000.0])
 
+        test_json = test_track.json()
+        self.assertEqual(test_json, {'type': 'total',
+                                     'camera_position': [-6.422, 64.568, 10000000.0]})
+
     
     # Test the full scraping of the 2017-08-21 event (abbreviated).
     def test_Scrape20170821_loadFromRawHTML(self):
 
-        #self.maxDiff = None
         test_date = date(2017, 8, 21)
         test_track = eclipsescraper.EclipseTrack(test_date)
         test_html = self.test_html['20170821']
@@ -144,8 +147,14 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
         self.assertEqual(test_track.data(), self.expected_track['20170821'])
 
         test_czml = test_track.czml()
-        #print(test_czml)
         self.assertEqual(test_czml, self.expected_czml['20170821'])
+
+        test_camera_position = test_track.getCameraPosition()
+        self.assertEqual(test_camera_position, [-37.658, 13.577, 10000000.0])
+
+        test_json = test_track.json()
+        self.assertEqual(test_json, {'type': 'unknown',
+                                     'camera_position': [-37.658, 13.577, 10000000.0]})
 
 
 def test_suite():
