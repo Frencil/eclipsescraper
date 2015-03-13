@@ -157,7 +157,6 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
         self.assertEqual(test_track.data(), self.expected_track['20170821'])
 
         test_czml = test_track.czml()
-        print(test_czml)
         self.assertEqual(test_czml, self.expected_czml['20170821'])
 
         test_camera_position = test_track.getCameraPosition()
