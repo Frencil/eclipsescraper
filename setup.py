@@ -38,6 +38,7 @@ setup(name='eclipsescraper',
       install_requires=[
           # -*- Extra requirements: -*-
           "czml>=0.3",
+          "geopy>=1.7.1",
           "lxml",
           ],
       )

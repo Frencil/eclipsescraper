@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
-import re, sys
+import re, sys, math
 from datetime import date
+from geopy.distance import vincenty
 
 from lxml import html
 
@@ -17,7 +18,7 @@ except ImportError:
 
 class EclipseTrack:
 
-    _properties = ('date', 'columns', 'url', 'type',
+    _properties = ('date', 'columns', 'url', 'type', 'limits',
                    'time', 'position', 'ms_diam_ratio',
                    'sun_altitude', 'sun_azimuth',
                    'path_width', 'central_line_duration')
@@ -37,6 +38,8 @@ class EclipseTrack:
         self.sun_azimuth = []
         self.path_width = []
         self.central_line_duration = []
+        self.limits = { 'north': [], 'south': [], 'central': [], 'ms_diam_ratio': [],
+                        'sun_altitude': [], 'sun_azimuth': [], 'path_width': [], 'central_line_duration': [] }
 
     def loadFromURL(self, url):
         self.url = url
@@ -77,11 +80,11 @@ class EclipseTrack:
 
     def parseHTML(self, html):
         allrows = re.sub(r'\r',r'\n',html).split('\n')
-        limits = 0
+        first_limits = False
         for row in allrows:
-            if 'Limits' in row:
-                limits += 1
-            elif limits == 1:
+            if "Limits" in row:
+                first_limits = True
+            if first_limits and len(self.limits['north']) < 2:
                 row_stripped = row.strip()
                 if len(row_stripped) > 0:
                     row_split = self.preparseHyphens(re.split('\s+',row_stripped))
@@ -137,36 +140,57 @@ class EclipseTrack:
         def get(column, row):
             def func_not_found(row):
                 return None
-            func = getattr(self,column,func_not_found)
-            return func(row)
+            try:
+                func = getattr(self,column,func_not_found)
+                return func(row)
+            except IndexError:
+                return None            
         
         for column in self.columns:
             val = get(column, row)
             parsed_row.append(val)
 
-        if (parsed_row[0] != None):
-            self.time.append(parsed_row[0])
-
-        if (parsed_row[1] != None) and (parsed_row[2] != None):
-            self.position['north'].append((parsed_row[2], parsed_row[1]))
+        if (parsed_row[0] == None):
+            return None;
         else:
-            self.position['north'].append(None)
-        
-        if (parsed_row[3] != None) and (parsed_row[4] != None):
-            self.position['south'].append((parsed_row[4], parsed_row[3]))
-        else:
-            self.position['south'].append(None)
+            time = parsed_row[0]
+            if (parsed_row[1] != None) and (parsed_row[2] != None):
+                north = (parsed_row[2], parsed_row[1])
+            else:
+                north = None
+            if (parsed_row[3] != None) and (parsed_row[4] != None):
+                south = (parsed_row[4], parsed_row[3])
+            else:
+                south = None
+            if (parsed_row[5] != None) and (parsed_row[6] != None):        
+                central = (parsed_row[6], parsed_row[5])
+            else:
+                central = None
+            ms_diam_ratio = parsed_row[7]
+            sun_altitude = parsed_row[8]
+            sun_azimuth = parsed_row[9]
+            path_width = parsed_row[10]
+            central_line_duration = parsed_row[11]
 
-        if (parsed_row[5] != None) and (parsed_row[6] != None):        
-            self.position['central'].append((parsed_row[6], parsed_row[5]))
+        if (time == 'Limits'):
+            self.limits['north'].append(north)
+            self.limits['south'].append(south)
+            self.limits['central'].append(central)
+            self.limits['ms_diam_ratio'].append(ms_diam_ratio)
+            self.limits['sun_altitude'].append(sun_altitude)
+            self.limits['sun_azimuth'].append(sun_azimuth)
+            self.limits['path_width'].append(path_width)
+            self.limits['central_line_duration'].append(central_line_duration)
         else:
-            self.position['central'].append(None)
-
-        self.ms_diam_ratio.append(parsed_row[7])
-        self.sun_altitude.append(parsed_row[8])
-        self.sun_azimuth.append(parsed_row[9])
-        self.path_width.append(parsed_row[10])
-        self.central_line_duration.append(parsed_row[11])
+            self.time.append(time)
+            self.position['north'].append(north)
+            self.position['south'].append(south)
+            self.position['central'].append(central)
+            self.ms_diam_ratio.append(ms_diam_ratio)
+            self.sun_altitude.append(sun_altitude)
+            self.sun_azimuth.append(sun_azimuth)
+            self.path_width.append(path_width)
+            self.central_line_duration.append(central_line_duration)
 
         return parsed_row
 
@@ -248,18 +272,59 @@ class EclipseTrack:
         ellipse_position = []
         ellipse_semiMajorAxis = []
         ellipse_semiMinorAxis = []
+        ellipse_rotation = []
+
         for t in range(len(self.time)):
+
             time = iso + "T" + self.time[t] + ":00Z"
+
+            # Define polyline waypoints only where data exist
             if self.position['north'][t] != None:
                 north_polyline_degrees += [self.position['north'][t][0], self.position['north'][t][1], 0.0]
             if self.position['central'][t] != None:
                 central_polyline_degrees += [self.position['central'][t][0], self.position['central'][t][1], 0.0]
-                ellipse_position += [time, self.position['central'][t][0], self.position['central'][t][1], 0.0]
             if self.position['south'][t] != None:
                 south_polyline_degrees += [self.position['south'][t][0], self.position['south'][t][1], 0.0]
-            if self.path_width[t] != None:
-                ellipse_semiMajorAxis += [time, self.path_width[t]/2 * 1000]
-                ellipse_semiMinorAxis += [time, self.path_width[t]/2 * 1000]
+
+            # Define ellipse positions and attributes for every time in the interval
+            ellipse_position += [time, self.position['central'][t][0], self.position['central'][t][1], 0.0]
+
+            use_limit = min(int(math.floor(t/(len(self.time)/2))),1)
+            if self.position['north'][t] == None:
+                north = self.limits['north'][use_limit]
+            else:
+                north = self.position['north'][t]
+            if self.position['central'][t] == None:
+                central = self.limits['central'][use_limit]
+            else:
+                central = self.position['central'][t]
+            if self.position['south'][t] == None:
+                south = self.limits['south'][use_limit]
+            else:
+                south = self.position['south'][t]
+
+            # Approximate ellipse semiMajorAxis from vincenty distance between limit polylines
+            north2 = (north[1], north[0])
+            south2 = (south[1], south[0])
+            semi_major_axis = vincenty(north2, south2).meters / 2
+
+            # Approximate elipse semiMinorAxis from sun altitude (probably way wrong!)
+            ellipse_axis_ratio = self.sun_altitude[t] / 90
+            semi_minor_axis = semi_major_axis * ellipse_axis_ratio
+
+            # Approximate ellipse rotation using basic spheroid (TODO: replace with WGS-84)
+            nlat = north[0]/180 * math.pi;
+            nlon = north[1]/180 * math.pi;
+            slat = south[0]/180 * math.pi;
+            slon = south[1]/180 * math.pi;
+            delta_lon = slon - nlon
+            y = math.sin(delta_lon) * math.cos(nlat);
+            x = math.cos(slat) * math.sin(nlat) - math.sin(slat) * math.cos(nlat) * math.cos(delta_lon);
+            rotation = math.atan2(y, x) + (math.pi/2);
+
+            ellipse_semiMajorAxis += [time, round(semi_major_axis, 3)]
+            ellipse_semiMinorAxis += [time, round(semi_minor_axis, 3)]
+            ellipse_rotation += [time, round(rotation, 3)]
 
         # Generate document packet with clock
         start_time = iso + "T" + self.time[0] + ":00Z"
@@ -311,7 +376,8 @@ class EclipseTrack:
         emat = czml.Material(solidColor=esc)
         xmaj = czml.Number(ellipse_semiMajorAxis)
         xmin = czml.Number(ellipse_semiMinorAxis)
-        ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
+        rot = czml.Number(ellipse_rotation)
+        ell = czml.Ellipse(show=True, fill=True, granularity=0.002, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin, rotation=rot)
         packet.ellipse = ell
         packet.position = czml.Position(cartographicDegrees=ellipse_position)
         doc.packets.append(packet)
