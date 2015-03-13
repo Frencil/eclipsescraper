@@ -182,15 +182,18 @@ class EclipseTrack:
             self.limits['path_width'].append(path_width)
             self.limits['central_line_duration'].append(central_line_duration)
         else:
-            self.time.append(time)
-            self.position['north'].append(north)
-            self.position['south'].append(south)
-            self.position['central'].append(central)
-            self.ms_diam_ratio.append(ms_diam_ratio)
-            self.sun_altitude.append(sun_altitude)
-            self.sun_azimuth.append(sun_azimuth)
-            self.path_width.append(path_width)
-            self.central_line_duration.append(central_line_duration)
+            if north != None and central != None and south != None:
+                self.time.append(time)
+                self.position['north'].append(north)
+                self.position['south'].append(south)
+                self.position['central'].append(central)
+                self.ms_diam_ratio.append(ms_diam_ratio)
+                self.sun_altitude.append(sun_altitude)
+                self.sun_azimuth.append(sun_azimuth)
+                self.path_width.append(path_width)
+                self.central_line_duration.append(central_line_duration)
+            else:
+                return None
 
         return parsed_row
 
@@ -311,14 +314,27 @@ class EclipseTrack:
             semi_minor_axis = semi_major_axis * ellipse_axis_ratio
 
             # Approximate ellipse rotation using basic spheroid (TODO: replace with WGS-84)
-            nlat = north[0]/180 * math.pi;
-            nlon = north[1]/180 * math.pi;
-            slat = south[0]/180 * math.pi;
-            slon = south[1]/180 * math.pi;
-            delta_lon = slon - nlon
-            y = math.sin(delta_lon) * math.cos(nlat);
-            x = math.cos(slat) * math.sin(nlat) - math.sin(slat) * math.cos(nlat) * math.cos(delta_lon);
-            rotation = math.atan2(y, x) + (math.pi/2);
+            # Calculate bearing in both directions and average them
+            nlat = north[1]/180 * math.pi;
+            nlon = north[0]/180 * math.pi;
+            clat = central[1]/180 * math.pi;
+            clon = central[0]/180 * math.pi;
+            slat = south[1]/180 * math.pi;
+            slon = south[0]/180 * math.pi;
+
+            y = math.sin(slon-nlon) * math.cos(slat);
+            x = math.cos(nlat) * math.sin(slat) - math.sin(nlat) * math.cos(slat) * math.cos(slon-nlon);
+            initial_bearing = math.atan2(y, x)
+            if (initial_bearing < 0):
+                initial_bearing += math.pi * 2
+
+            y = math.sin(nlon-slon) * math.cos(nlat);
+            x = math.cos(slat) * math.sin(nlat) - math.sin(slat) * math.cos(nlat) * math.cos(nlon-slon);
+            final_bearing = math.atan2(y, x) - math.pi
+            if (final_bearing < 0):
+                final_bearing += math.pi * 2
+
+            rotation = -1 * ((initial_bearing + final_bearing) / 2 - (math.pi / 2))
 
             ellipse_position += [time, central[0], central[1], 0.0]
             ellipse_semiMajorAxis += [time, round(semi_major_axis, 3)]
@@ -368,6 +384,35 @@ class EclipseTrack:
         packet.polyline = spl
         doc.packets.append(packet)
 
+        # Generate parallels and meridians
+        """
+        for lat in range(50,85,5):
+            degs = []
+            for lon in range(-40, 30, 5):
+                degs += [lon, lat, 0.0]
+            packet_id = 'parallel_' + str(lat)
+            packet = czml.CZMLPacket(id=packet_id)
+            sc = czml.SolidColor(color=czml.Color(rgba=(128, 128, 128, 255)))
+            mat = czml.Material(solidColor=sc)
+            pos = czml.Positions(cartographicDegrees=degs)
+            pl = czml.Polyline(show=True, width=1, followSurface=True, material=mat, positions=pos)
+            packet.polyline = pl
+            doc.packets.append(packet)
+
+        for lon in range(-40,30,5):
+            degs = []
+            for lat in range(50, 90, 5):
+                degs += [lon, lat, 0.0]
+            packet_id = 'meridian_' + str(lon)
+            packet = czml.CZMLPacket(id=packet_id)
+            sc = czml.SolidColor(color=czml.Color(rgba=(128, 128, 128, 255)))
+            mat = czml.Material(solidColor=sc)
+            pos = czml.Positions(cartographicDegrees=degs)
+            pl = czml.Polyline(show=True, width=1, followSurface=True, material=mat, positions=pos)
+            packet.polyline = pl
+            doc.packets.append(packet)
+        """
+
         # Generate ellipse shadow packet
         packet_id = iso + '_shadow_ellipse'
         packet = czml.CZMLPacket(id=packet_id)
@@ -380,5 +425,81 @@ class EclipseTrack:
         packet.ellipse = ell
         packet.position = czml.Position(cartographicDegrees=ellipse_position)
         doc.packets.append(packet)
+
+        # Generate markers for all points on limit polylines
+        """
+        for t in range(len(self.time)):
+
+            time = iso + "T" + self.time[t] + ":00Z"
+
+            use_limit = min(int(math.floor(t/(len(self.time)/2))),1)
+            if self.position['north'][t] == None:
+                north = self.limits['north'][use_limit]
+            else:
+                north = self.position['north'][t]
+            if self.position['central'][t] == None:
+                central = self.limits['central'][use_limit]
+            else:
+                central = self.position['central'][t]
+            if self.position['south'][t] == None:
+                south = self.limits['south'][use_limit]
+            else:
+                south = self.position['south'][t]
+
+            nspositions = [north[0], north[1], 0.0, south[0], south[1], 0.0]
+
+            packet_id = iso + '_marker_polyline_' + time
+            packet = czml.CZMLPacket(id=packet_id)
+            ssc = czml.SolidColor(color=czml.Color(rgba=(255, 255, 255, 255)))
+            smat = czml.Material(solidColor=ssc)
+            pos = czml.Positions(cartographicDegrees=nspositions)
+            spl = czml.Polyline(show=True, width=1, followSurface=True, material=smat, positions=pos)
+            packet.polyline = spl
+            doc.packets.append(packet)
+
+            axes = []
+            npositions = []
+            cpositions = []
+            spositions = []
+            for t2 in range(len(self.time)):
+                time2 = iso + "T" + self.time[t2] + ":00Z"
+                axes += [time2, 20000]
+                npositions += [time2, north[0], north[1], 0.0]
+                cpositions += [time2, central[0], central[1], 0.0]
+                spositions += [time2, south[0], south[1], 0.0]
+
+            packet_id = iso + '_north_marker_' + time
+            packet = czml.CZMLPacket(id=packet_id)
+            esc = czml.SolidColor(color=czml.Color(rgba=(240, 80, 80, 255)))
+            emat = czml.Material(solidColor=esc)
+            xmaj = czml.Number(axes)
+            xmin = czml.Number(axes)
+            ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
+            packet.ellipse = ell
+            packet.position = czml.Position(cartographicDegrees=npositions)
+            doc.packets.append(packet)
+
+            packet_id = iso + '_central_marker_' + time
+            packet = czml.CZMLPacket(id=packet_id)
+            esc = czml.SolidColor(color=czml.Color(rgba=(80, 240, 80, 255)))
+            emat = czml.Material(solidColor=esc)
+            xmaj = czml.Number(axes)
+            xmin = czml.Number(axes)
+            ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
+            packet.ellipse = ell
+            packet.position = czml.Position(cartographicDegrees=cpositions)
+            doc.packets.append(packet)
+
+            packet_id = iso + '_south_marker_' + time
+            packet = czml.CZMLPacket(id=packet_id)
+            esc = czml.SolidColor(color=czml.Color(rgba=(80, 80, 240, 255)))
+            emat = czml.Material(solidColor=esc)
+            xmaj = czml.Number(axes)
+            xmin = czml.Number(axes)
+            ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
+            packet.ellipse = ell
+            packet.position = czml.Position(cartographicDegrees=spositions)
+            doc.packets.append(packet)
+        """
 
         return list(doc.data())
