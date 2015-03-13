@@ -9,7 +9,7 @@ from lxml import html
 if sys.version[0] is '3':
     import urllib.request
 elif sys.version[0] is '2':
-    import requests  
+    import requests
 
 try:
     from czml import czml
