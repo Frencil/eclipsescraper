@@ -286,9 +286,7 @@ class EclipseTrack:
             if self.position['south'][t] != None:
                 south_polyline_degrees += [self.position['south'][t][0], self.position['south'][t][1], 0.0]
 
-            # Define ellipse positions and attributes for every time in the interval
-            ellipse_position += [time, self.position['central'][t][0], self.position['central'][t][1], 0.0]
-
+            # Define ellipse positions and attributes for every time in the interval, using limits where necessary
             use_limit = min(int(math.floor(t/(len(self.time)/2))),1)
             if self.position['north'][t] == None:
                 north = self.limits['north'][use_limit]
@@ -322,6 +320,7 @@ class EclipseTrack:
             x = math.cos(slat) * math.sin(nlat) - math.sin(slat) * math.cos(nlat) * math.cos(delta_lon);
             rotation = math.atan2(y, x) + (math.pi/2);
 
+            ellipse_position += [time, central[0], central[1], 0.0]
             ellipse_semiMajorAxis += [time, round(semi_major_axis, 3)]
             ellipse_semiMinorAxis += [time, round(semi_minor_axis, 3)]
             ellipse_rotation += [time, round(rotation, 3)]
