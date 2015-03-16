@@ -27,6 +27,7 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
   
  Limits  39 59.7N 171 44.9W  39 28.8N 171 26.0W  39 44.2N 171 35.4W  1.016   0   -   62  00m51.6s
  16:50   41 29.7N 164 30.3W  41 25.2N 161 24.4W  41 29.2N 162 51.0W  1.018   7  80   70  01m01.6s
+ 18:00   41 20.0N 098 08.9W  40 20.6N 098 27.7W  40 50.3N 098 18.3W  1.030  60 162  112  02m35.7s
  20:00   13 39.6N 036 48.6W  13 28.6N 038 28.0W  13 34.6N 037 39.5W  1.017  11 280   71  01m02.5s
  Limits  11 15.6N 027 19.9W  10 46.9N 027 33.1W  11 01.2N 027 26.5W  1.014   0   -   57  00m47.1s
 </pre>bar"""
@@ -35,15 +36,15 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
                                   'columns': ['Time', 'NorthLimitLat', 'NorthLimitLon',
                                               'SouthLimitLat', 'SouthLimitLon', 'CentralLat', 'CentralLon',
                                               'MSDiamRatio', 'SunAltitude', 'SunAzimuth', 'PathWidth', 'CentralLineDuration'],
-                                  'time': ['16:50','20:00'],
-                                  'position': {'north': [(-164.505, 41.495), (-36.81, 13.66)],
-                                               'central': [(-162.85, 41.487), (-37.658, 13.577)],
-                                               'south': [(-161.407, 41.42), (-38.467, 13.477)]},
-                                  'ms_diam_ratio': [1.018, 1.017],
-                                  'sun_altitude': [7, 11],
-                                  'sun_azimuth': [80, 280],
-                                  'path_width': [70, 71],
-                                  'central_line_duration': ['01m01.6s', '01m02.5s'],
+                                  'time': ['16:50', '18:00', '20:00'],
+                                  'position': {'north': [(-164.505, 41.495), (-98.148, 41.333), (-36.81, 13.66)],
+                                               'central': [(-162.85, 41.487), (-98.305, 40.838), (-37.658, 13.577)],
+                                               'south': [(-161.407, 41.42), (-98.462, 40.343), (-38.467, 13.477)]},
+                                  'ms_diam_ratio': [1.018, 1.03, 1.017],
+                                  'sun_altitude': [7.0, 60.0, 11.0],
+                                  'sun_azimuth': [80.0, 162.0, 280.0],
+                                  'path_width': [70.0, 112.0, 71.0],
+                                  'central_line_duration': ['01m01.6s', '02m35.7s', '01m02.5s'],
                                   'limits': { 'north': [(-171.748, 39.995), (-27.332, 11.26)],
                                               'central': [(-171.59, 39.737), (-27.442, 11.02)],
                                               'south': [(-171.433, 39.48), (-27.552, 10.782)],
@@ -66,7 +67,7 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
                                                'show': True,
                                                'followSurface': True,
                                                'material': {'solidColor': {'color': { 'rgba': [255, 255, 255, 128] }}},
-                                               'positions': {'cartographicDegrees': [-164.505, 41.495, 0.0, -36.81, 13.66, 0.0]},
+                                               'positions': {'cartographicDegrees': [-164.505, 41.495, 0.0, -98.148, 41.333, 0.0, -36.81, 13.66, 0.0]},
                                                },
                                   },
                                  {'id': '2017-08-21_central_polyline',
@@ -75,7 +76,7 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
                                                'followSurface': True,
                                                'material': {'polylineGlow': {'color': { 'rgba': [223, 150, 47, 128] },
                                                                              'glowPower': 0.25}},
-                                               'positions': {'cartographicDegrees': [-162.85, 41.487, 0.0, -37.658, 13.577, 0.0]},
+                                               'positions': {'cartographicDegrees': [-162.85, 41.487, 0.0, -98.305, 40.838, 0.0, -37.658, 13.577, 0.0]},
                                                },
                                   },
                                  {'id': '2017-08-21_south_polyline',
@@ -83,7 +84,7 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
                                                'show': True,
                                                'followSurface': True,
                                                'material': {'solidColor': {'color': { 'rgba': [255, 255, 255, 128] }}},
-                                               'positions': {'cartographicDegrees': [-161.407, 41.42, 0.0, -38.467, 13.477, 0.0]},
+                                               'positions': {'cartographicDegrees': [-161.407, 41.42, 0.0, -98.462, 40.343, 0.0, -38.467, 13.477, 0.0]},
                                                },
                                   },
                                  {'id': '2017-08-21_shadow_ellipse',
@@ -92,13 +93,17 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
                                               'granularity': 0.002,
                                               'material': {'solidColor': {'color': { 'rgba': [0, 0, 0, 160] }}},
                                               'semiMajorAxis': {'number': ['2017-08-21T16:50:00Z', 129480.146,
+                                                                           '2017-08-21T18:00:00Z', 56542.367,
                                                                            '2017-08-21T20:00:00Z', 90240.032]},
                                               'semiMinorAxis': {'number': ['2017-08-21T16:50:00Z', 10070.678,
+                                                                           '2017-08-21T18:00:00Z', 37694.912,
                                                                            '2017-08-21T20:00:00Z', 11029.337]},
                                               'rotation': {'number': ['2017-08-21T16:50:00Z', -0.032,
+                                                                      '2017-08-21T18:00:00Z', -1.806,
                                                                       '2017-08-21T20:00:00Z', -3.028]},
                                               },
                                   'position': {'cartographicDegrees': ['2017-08-21T16:50:00+00:00', -162.85, 41.487, 0.0,
+                                                                       '2017-08-21T18:00:00+00:00', -98.305, 40.838, 0.0,
                                                                        '2017-08-21T20:00:00+00:00', -37.658, 13.577, 0.0]},
                                   },
                                  ]
@@ -144,11 +149,14 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
 
         test_json = test_track.json()
         self.assertEqual(test_json, {'type': 'total',
+                                     'regions': ['arctic', 'europe', 'north atlantic'],
                                      'camera_position': [-6.422, 64.568, 10000000.0]})
 
     
     # Test the full scraping of the 2017-08-21 event (abbreviated).
     def test_Scrape20170821_loadFromRawHTML(self):
+
+        self.maxDiff = None
 
         test_date = date(2017, 8, 21)
         test_track = eclipsescraper.EclipseTrack(test_date)
@@ -164,6 +172,7 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
 
         test_json = test_track.json()
         self.assertEqual(test_json, {'type': 'unknown',
+                                     'regions': ['north america', 'north atlantic', 'north pacific'],
                                      'camera_position': [-37.658, 13.577, 10000000.0]})
 
 

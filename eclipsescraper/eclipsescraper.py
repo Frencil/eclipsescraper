@@ -250,15 +250,58 @@ class EclipseTrack:
     def CentralLineDuration(self, row):
         return row[17]
 
+    # Generate a point 10km above the center of the track for positioning a camera
     def getCameraPosition(self):
         index = int(round(len(self.position['central'])/2))
         position = self.position['central'][index]
         return [position[0], position[1], 10000000.0]
 
+    # Examine the track to determine what large-scale "regions" the track covers
+    def getRegions(self):
+        # Each region is defined as bounding limits of south, north, west, east (in that order)
+        possible_regions = { 'north atlantic': [0, 60, -70, -10],
+                             'south atlantic': [-60, 0, -50, 10],
+                             'north pacific': [0, 50, 140, -120],
+                             'south pacific': [-70, 0, 170, -80],
+                             'indian ocean': [-60, 20, 50, 100],
+                             'arctic': [60, 90, 0, 0],
+                             'north america': [20, 80, -140, -60],
+                             'central america': [7, 30, -120, -60],
+                             'south america': [-60, 10, -80, -25],
+                             'europe': [35, 70, -10, 45],
+                             'northern africa': [5, 35, -17, 50],
+                             'southern africa': [-35, 5, 10,50],
+                             'middle east': [12, 50, 30, 75],
+                             'northern asia': [45, 70, 45, 180],
+                             'eastern asia': [20, 45, 75, 145],
+                             'southeastern asia': [-10, 20, 75, 160],
+                             'australia / new zealand': [-60, -10, 110, 180],
+                             'antarctica': [-90, -60, 0, 0],
+                             }
+        active_regions = []
+        for region in possible_regions:
+            in_region = False
+            region_range = possible_regions[region]
+            for position in self.position['central']:
+                in_lat = region_range[0] < position[1] < region_range[1]
+                if region_range[2] == region_range[3]:
+                    in_lon = True
+                elif region_range[2] > region_range[3]:
+                    in_lon = region_range[2] < position[0] < 180 or -180 < position[0] < region_range[3]
+                else:
+                    in_lon = region_range[2] < position[0] < region_range[3]
+                if in_lat and in_lon:
+                    in_region = True
+                    break;
+            if in_region:
+                active_regions.append(region)
+        return sorted(active_regions)
+
     # Generate a JSON metadata object (for useful values that can't be represented in CZML)
     def json(self):
         obj = {'type': self.type,
                'camera_position': self.getCameraPosition(),
+               'regions': self.getRegions(),
                }
         return obj
 
@@ -384,35 +427,6 @@ class EclipseTrack:
         packet.polyline = spl
         doc.packets.append(packet)
 
-        # Generate parallels and meridians
-        """
-        for lat in range(50,85,5):
-            degs = []
-            for lon in range(-40, 30, 5):
-                degs += [lon, lat, 0.0]
-            packet_id = 'parallel_' + str(lat)
-            packet = czml.CZMLPacket(id=packet_id)
-            sc = czml.SolidColor(color=czml.Color(rgba=(128, 128, 128, 255)))
-            mat = czml.Material(solidColor=sc)
-            pos = czml.Positions(cartographicDegrees=degs)
-            pl = czml.Polyline(show=True, width=1, followSurface=True, material=mat, positions=pos)
-            packet.polyline = pl
-            doc.packets.append(packet)
-
-        for lon in range(-40,30,5):
-            degs = []
-            for lat in range(50, 90, 5):
-                degs += [lon, lat, 0.0]
-            packet_id = 'meridian_' + str(lon)
-            packet = czml.CZMLPacket(id=packet_id)
-            sc = czml.SolidColor(color=czml.Color(rgba=(128, 128, 128, 255)))
-            mat = czml.Material(solidColor=sc)
-            pos = czml.Positions(cartographicDegrees=degs)
-            pl = czml.Polyline(show=True, width=1, followSurface=True, material=mat, positions=pos)
-            packet.polyline = pl
-            doc.packets.append(packet)
-        """
-
         # Generate ellipse shadow packet
         packet_id = iso + '_shadow_ellipse'
         packet = czml.CZMLPacket(id=packet_id)
@@ -425,81 +439,5 @@ class EclipseTrack:
         packet.ellipse = ell
         packet.position = czml.Position(cartographicDegrees=ellipse_position)
         doc.packets.append(packet)
-
-        # Generate markers for all points on limit polylines
-        """
-        for t in range(len(self.time)):
-
-            time = iso + "T" + self.time[t] + ":00Z"
-
-            use_limit = min(int(math.floor(t/(len(self.time)/2))),1)
-            if self.position['north'][t] == None:
-                north = self.limits['north'][use_limit]
-            else:
-                north = self.position['north'][t]
-            if self.position['central'][t] == None:
-                central = self.limits['central'][use_limit]
-            else:
-                central = self.position['central'][t]
-            if self.position['south'][t] == None:
-                south = self.limits['south'][use_limit]
-            else:
-                south = self.position['south'][t]
-
-            nspositions = [north[0], north[1], 0.0, south[0], south[1], 0.0]
-
-            packet_id = iso + '_marker_polyline_' + time
-            packet = czml.CZMLPacket(id=packet_id)
-            ssc = czml.SolidColor(color=czml.Color(rgba=(255, 255, 255, 255)))
-            smat = czml.Material(solidColor=ssc)
-            pos = czml.Positions(cartographicDegrees=nspositions)
-            spl = czml.Polyline(show=True, width=1, followSurface=True, material=smat, positions=pos)
-            packet.polyline = spl
-            doc.packets.append(packet)
-
-            axes = []
-            npositions = []
-            cpositions = []
-            spositions = []
-            for t2 in range(len(self.time)):
-                time2 = iso + "T" + self.time[t2] + ":00Z"
-                axes += [time2, 20000]
-                npositions += [time2, north[0], north[1], 0.0]
-                cpositions += [time2, central[0], central[1], 0.0]
-                spositions += [time2, south[0], south[1], 0.0]
-
-            packet_id = iso + '_north_marker_' + time
-            packet = czml.CZMLPacket(id=packet_id)
-            esc = czml.SolidColor(color=czml.Color(rgba=(240, 80, 80, 255)))
-            emat = czml.Material(solidColor=esc)
-            xmaj = czml.Number(axes)
-            xmin = czml.Number(axes)
-            ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
-            packet.ellipse = ell
-            packet.position = czml.Position(cartographicDegrees=npositions)
-            doc.packets.append(packet)
-
-            packet_id = iso + '_central_marker_' + time
-            packet = czml.CZMLPacket(id=packet_id)
-            esc = czml.SolidColor(color=czml.Color(rgba=(80, 240, 80, 255)))
-            emat = czml.Material(solidColor=esc)
-            xmaj = czml.Number(axes)
-            xmin = czml.Number(axes)
-            ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
-            packet.ellipse = ell
-            packet.position = czml.Position(cartographicDegrees=cpositions)
-            doc.packets.append(packet)
-
-            packet_id = iso + '_south_marker_' + time
-            packet = czml.CZMLPacket(id=packet_id)
-            esc = czml.SolidColor(color=czml.Color(rgba=(80, 80, 240, 255)))
-            emat = czml.Material(solidColor=esc)
-            xmaj = czml.Number(axes)
-            xmin = czml.Number(axes)
-            ell = czml.Ellipse(show=True, fill=True, material=emat, semiMajorAxis=xmaj, semiMinorAxis=xmin)
-            packet.ellipse = ell
-            packet.position = czml.Position(cartographicDegrees=spositions)
-            doc.packets.append(packet)
-        """
 
         return list(doc.data())
