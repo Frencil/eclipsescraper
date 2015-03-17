@@ -148,7 +148,8 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
         self.assertEqual(test_camera_position, [-6.422, 64.568, 10000000.0])
 
         test_json = test_track.json()
-        self.assertEqual(test_json, {'type': 'total',
+        self.assertEqual(test_json, {'iso': '2015-03-20',
+                                     'type': 'total',
                                      'regions': ['arctic', 'europe', 'north atlantic'],
                                      'camera_position': [-6.422, 64.568, 10000000.0]})
 
@@ -171,7 +172,8 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
         self.assertEqual(test_camera_position, [-37.658, 13.577, 10000000.0])
 
         test_json = test_track.json()
-        self.assertEqual(test_json, {'type': 'unknown',
+        self.assertEqual(test_json, {'iso': '2017-08-21',
+                                     'type': 'unknown',
                                      'regions': ['north america', 'north atlantic', 'north pacific'],
                                      'camera_position': [-37.658, 13.577, 10000000.0]})
 

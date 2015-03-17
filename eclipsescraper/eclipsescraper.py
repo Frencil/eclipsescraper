@@ -299,7 +299,8 @@ class EclipseTrack:
 
     # Generate a JSON metadata object (for useful values that can't be represented in CZML)
     def json(self):
-        obj = {'type': self.type,
+        obj = {'iso':  self.date.isoformat(),
+               'type': self.type,
                'camera_position': self.getCameraPosition(),
                'regions': self.getRegions(),
                }
