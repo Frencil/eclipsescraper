@@ -169,13 +169,13 @@ Universal  Northern Limit      Southern Limit       Central Line     Diam.  Sun 
         self.assertEqual(test_czml, self.expected_czml['20170821'])
 
         test_camera_position = test_track.getCameraPosition()
-        self.assertEqual(test_camera_position, [-37.658, 13.577, 10000000.0])
+        self.assertEqual(test_camera_position, [-98.305, 40.838, 10000000.0])
 
         test_json = test_track.json()
         self.assertEqual(test_json, {'iso': '2017-08-21',
                                      'type': 'unknown',
                                      'regions': ['north america', 'north atlantic', 'north pacific'],
-                                     'camera_position': [-37.658, 13.577, 10000000.0]})
+                                     'camera_position': [-98.305, 40.838, 10000000.0]})
 
 
 def test_suite():
