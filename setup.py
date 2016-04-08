@@ -37,7 +37,7 @@ setup(name='eclipsescraper',
       cmdclass = {'test': PyTest},
       install_requires=[
           # -*- Extra requirements: -*-
-          "czml>=0.3",
+          "czml>=0.3.2",
           "geopy>=1.9.1",
           "lxml",
           ],

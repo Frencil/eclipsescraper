@@ -20,6 +20,8 @@ Run tests in the top-level directory like so:
 python setup.py test
 ```
 
+**NOTE:** EclipseScraper is built explicitly for python 3.3. It may or may not work for python 2.x.
+
 Eclipse Scraper is continually tested with [Travis CI](https://travis-ci.org/Frencil/eclipsescraper).
 
 [![Build Status](https://api.travis-ci.org/Frencil/eclipsescraper.png)](https://travis-ci.org/Frencil/eclipsescraper)
